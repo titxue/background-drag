@@ -1,33 +1,50 @@
 let isDragging = false;
-let currentBox = null;
+let position = 0.4; // 初始宽度占容器宽度的40%
+const threshold = 10; // 鼠标距离白色盒子右边界的阈值，小于此值时开始拖动
 
-// 设置白色盒子的默认宽度为容器宽度的30%
 const whiteBox = document.getElementById('white-box');
 const container = document.getElementById('container');
-whiteBox.style.width = `${container.offsetWidth * 0.3}px`;
 
-document.addEventListener('mousedown', function(event) {
-  // 只允许白色盒子拖动
-  if (event.target.id === 'white-box') {
-    isDragging = true;
-    currentBox = event.target;
-  }
-});
+function resetWhiteBox() {
+  // 添加动画
+  whiteBox.style.transition = 'width 0.5s ease-out';
+  
+  whiteBox.style.width = `${container.offsetWidth * position}px`;
+  
+  // 在动画结束后移除动画
+  whiteBox.addEventListener('transitionend', function() {
+    whiteBox.style.transition = '';
+  }, { once: true });
+}
+
+// 初始化白色盒子的宽度
+resetWhiteBox();
 
 document.addEventListener('mousemove', function(event) {
-  if (isDragging) {
-    let rect = container.getBoundingClientRect();
-    let x = event.clientX - rect.left;
+  let rect = container.getBoundingClientRect();
+  let x = event.clientX - rect.left;
 
+  let whiteBoxWidth = parseFloat(whiteBox.style.width);
+  
+  // 检查鼠标是否接近白色盒子的右边界
+  if (Math.abs(whiteBoxWidth - x) < threshold) {
+    isDragging = true;
+  }
+
+  if (isDragging) {
+    // 移除任何现有的动画
+    whiteBox.style.transition = '';
+  
     if (x < 0) x = 0;
     if (x > rect.width) x = rect.width;
 
-    // 白色盒子只能往右拖动
-    currentBox.style.width = `${x}px`;
-  }
-});
+    // 白色盒子往右拖动
+    whiteBox.style.width = `${x}px`;
 
-document.addEventListener('mouseup', function() {
-  isDragging = false;
-  currentBox = null;
+    // 如果白色盒子被拖动到了容器的右侧或左侧边界，立即重置它的宽度
+    if (x >= rect.width || x <= 0) {
+      resetWhiteBox();
+      isDragging = false;
+    }
+  }
 });
